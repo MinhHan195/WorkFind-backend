@@ -2,7 +2,7 @@ Tên đề tài: Xây dựng website tuyển dụng
 
 Chức năng chung:
 
-    + Gửi mail kích hoạt - mail
+    + Gửi mail kích hoạt - mail (xong)
 
     + Quản lý thông báo
 
@@ -14,7 +14,7 @@ Chức năng chung:
 
 Chức năng phía người tuyển:
 
-    + Đăng ký - user
+    + Đăng ký - user (Xong)
 
     + Đăng nhập - user
 
@@ -32,7 +32,7 @@ Chức năng phía người tuyển:
 
 Chức năng phía người ứng tuyển:
 
-    + Đăng ký - user
+    + Đăng ký - user (xong)
 
     + Đăng nhập - user
 
