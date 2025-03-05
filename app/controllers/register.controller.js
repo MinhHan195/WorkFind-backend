@@ -11,19 +11,29 @@ const sendMail = require("../helpers/send.mail");
 
 const bcrypt = require("bcrypt");
 const {addMinutes, isAfter} = require("date-fns");
+const Joi = require("../validation/user.validate");
 
 exports.create = async (req, res, next) => {
-    if(!req.body?.name) {
-        return next(new ApiError(400, "Ten tai khoang khong the trong"));
-    }
     try{
-        const token = await bcrypt.hash(req.body.email, 5);
+        // B1: Validate phia sever
+        const {value, error} = Joi.registerValidate.validate(req.body);
+        if(error){
+            return next(new ApiError(400,error.details[0].message));
+        }
+        // B2: Kiem tra tai khoan co ton tai khong
         const accountService = new AccountService(MongoDB.client);
         const result = await accountService.findByEmail(req.body.email);
         if(result){
-            return res.send({message: "Tim tai khoan nguoi dung"});
+            return res.send({message: "Email đã tồn tại tài khoản"});
         }
+
+        // B3: Tạo mã kích hoạt tài khoản
+        const token = await bcrypt.hash(req.body.email, 5);
+
+        // B4: Tạo tài khoản với mã kích hoạt
         const document = await accountService.create(req.body, token);
+
+        // B5: Tạo record lưu thông tin khác của user tài khoản
         if(req.body.role==="user"){
             const userService = new UserService(MongoDB.client);
             await userService.create(req.body, document.insertedId);
@@ -31,8 +41,8 @@ exports.create = async (req, res, next) => {
             const companyService = new CompanyService(MongoDB.client);
             await companyService.create(req.body, document.insertedId);
         }
-        console.log(document);
-        
+
+        // B6: Gửi mail kích hoạt tài khoảng
         await sendMail({
             email: req.body.email,
             subject: "KÍCH HOẠT TÀI KHOẢN",
@@ -43,6 +53,8 @@ exports.create = async (req, res, next) => {
                 </a>
             `
         })
+
+        // B7: Thông báo cho người dùng tại tài khoảng thành công
         return res.send(document);
     }catch(error) {
         console.log(error);
@@ -62,9 +74,7 @@ exports.verify = async (req, res, next) => {
         if(!account) {
             return next(new ApiError(404, `Account not found`));
         }
-        console.log(account.dateTimeCreate);
-        const timeCreated = addMinutes(account.dateTimeCreate, 1);
-        console.log(timeCreated);
+        const timeCreated = addMinutes(account.dateTimeCreate, 10);
         if(account.activeStatus) {
             return res.send({message: "Tài khoản đã được kích hoạt trước đó"});
         }

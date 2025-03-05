@@ -44,11 +44,15 @@ class AccountService {
         };
         const result = await this.Contact.findOneAndUpdate(
             filter,
-            { $set: {
-                activeStatus: true,
-                dateTimeUpdate: new Date().toLocaleString(),
-
-            }},
+            { 
+                $set: {
+                    activeStatus: true,
+                    dateTimeUpdate: new Date().toLocaleString(),
+                },
+                $unset: {
+                    token: "",
+                }
+            },
             { returnDocument: "after"}
         );
         return result;

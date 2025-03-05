@@ -12,11 +12,11 @@ Chức năng chung:
 
     + Đính kèm hồ sơ
 
+    + Đăng nhập - user (Xong)
+
 Chức năng phía người tuyển:
 
     + Đăng ký - user (Xong)
-
-    + Đăng nhập - user
 
     + Thống kê tổng quan
 
@@ -33,8 +33,6 @@ Chức năng phía người tuyển:
 Chức năng phía người ứng tuyển:
 
     + Đăng ký - user (xong)
-
-    + Đăng nhập - user
 
     + Gửi hồ sơ - profile
 
