@@ -18,11 +18,15 @@ Chức năng phía người tuyển:
 
     + Đăng ký - user (Xong)
 
-    + Thống kê tổng quan
+    + Thống kê tổng quan:
 
-    + Danh sách công việc đăng tuyển - jobs
+        - Tổng số lượng công việc đã đăng (xong)
 
-    + Đăng tuyển dụng - jobs
+        - Tổng số lượng thư xin việc đã nhận
+
+    + Danh sách công việc đăng tuyển - jobs (xong)
+
+    + Đăng tuyển dụng - jobs (xong)
 
     + Thư xin việc đã nhận - mail
 
@@ -40,17 +44,17 @@ Chức năng phía người ứng tuyển:
 
     + Chức năng tìm kiếm - frontend
 
-    	+ Tìm kiếm theo tỉnh
+    	+ Tìm kiếm theo tỉnh (xong)
 
-    	+ Tìm kiếm theo vị trí
+    	+ Tìm kiếm theo vị trí (xong)
 
-    	+ Tìm kiếm theo mức lương
+    	+ Tìm kiếm theo mức lương (xong)
 
-    	+ Tìm kiếm theo từ khóa
+    	+ Tìm kiếm theo từ khóa (xong)
 
-    	+ Tìm kiếm theo cấp bậc
+    	+ Tìm kiếm theo cấp bậc (xong)
 
-    	+ Tìm kiếm theo ngành
+    	+ Tìm kiếm theo ngành (xong)
 
     + Chỉnh sử thông tin - user
 
