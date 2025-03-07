@@ -7,8 +7,8 @@ class CompanyService{
 
     async extractCompanyData(payload, id){
         const company = {
-            id: id,
-            name: payload.name,
+            accountId: id,
+            nameCompany: payload.name,
             email: payload.email,
             address: payload.address,
             phone: payload.phone,
@@ -27,9 +27,9 @@ class CompanyService{
         return result;
     }
 
-    async deleteCompany(id){
+    async deleteByAccountId(id){
         const result = await this.Contact.findOneAndDelete({
-            id: ObjectId.isValid(id) ? new ObjectId(id) : null,
+            accountId: ObjectId.isValid(id) ? new ObjectId(id) : null,
         });
         return result;
     }

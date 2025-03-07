@@ -15,3 +15,21 @@ exports.registerValidate = Joi.object({
         .required()
         .messages({ "ConfirmPassword": "Mật khẩu xác nhận không khớp!" }),
 })
+
+exports.passwordValidate = Joi.object({
+    oldPassword: Joi.string().min(6).max(30).required(),
+    newPassword: Joi.string().min(6).max(30).required(),
+    confirmNewPassword: Joi.string()
+        .valid(Joi.ref("newPassword"))
+        .required()
+        .messages({"any.only": "Mật khẩu xác nhận không khớp!"}),
+})
+
+exports.forgotPasswordValidate = Joi.object({
+    userId: Joi.string().required(),
+    newPassword: Joi.string().min(6).max(30).required(),
+    confirmNewPassword: Joi.string()
+        .valid(Joi.ref("newPassword"))
+        .required()
+        .messages({ 'any.only': 'Xác nhận mật khẩu không khớp' }),
+})

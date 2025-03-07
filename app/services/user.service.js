@@ -7,7 +7,7 @@ class UserService{
 
     async extractUserData(payload, id){
         const user = {
-            id: id,
+            accountId: id,
             name: payload.name,
             email: payload.email,
             gender: payload.gender,
@@ -27,9 +27,9 @@ class UserService{
         return result;
     }
 
-    async deleteUser(id){
+    async deleteByAccountId(id){
         const result = await this.Contact.findOneAndDelete({
-            id: ObjectId.isValid(id) ? new ObjectId(id) : null,
+            accountId: ObjectId.isValid(id) ? new ObjectId(id) : null,
         });
         return result;
     }

@@ -2,6 +2,7 @@ const express = require("express");
 const account = require("../controllers/account.controller")
 const register = require("../controllers/register.controller")
 const auth = require("../controllers/auth.controllers");
+const middleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -11,13 +12,21 @@ router.route("/")
 router.route("/signin")
     .post(auth.signIn);
 
+router.route("/changePassword")
+    .post(middleware.verifyToken,account.changePassword);
+
+router.route("/reset/reset_request")
+    .post(account.sendRequest)      
+    .get(account.getUserId);  
+
+router.route("/reset/password")
+    .post(account.resetPassword);
+
 router.route("/verify")
     .get(register.verify);
 
 router.route("/:id")
-    .get(account.findOne)
-    .delete(account.delete)
-    .put(account.update);
+    .delete(middleware.verifyToken,account.delete);
 
 
 

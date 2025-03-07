@@ -58,7 +58,9 @@ Chức năng phía người ứng tuyển:
 
     + Chỉnh sử thông tin - user
 
-    + Đổi mật khẩu - account
+    + Đổi mật khẩu - account (xong)
+
+    + Quên mật khẩu - account (xong)
 
     + Thống kê hồ sơ đã nộp - profile
 
