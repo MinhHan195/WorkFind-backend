@@ -15,7 +15,7 @@ exports.jobValidate = Joi.object({
     careerLevel: Joi.string().required(),
     positionType: Joi.string().required(),
     gender: Joi.required(),
-    groupJob: Joi.string().required(),
+    jobType: Joi.string().required(),
     addressContact: Joi.string().required(),
     staffName: Joi.string().min(3).max(30).required(),
     phone:Joi.string().pattern(/^0[35789][0-9]{8}$/),

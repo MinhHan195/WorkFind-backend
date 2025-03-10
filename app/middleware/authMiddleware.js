@@ -22,6 +22,7 @@ exports.verifyToken = async (req, res, next) => {
             return next(new ApiError(404, "User not found"));
         }
         // B3: Lưu thông tin trong token vào req.user
+        console.log(decoded);
         req.user = decoded;
         // B4: Chuyển đến controller
         next();

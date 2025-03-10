@@ -1,0 +1,31 @@
+const Joi = require("joi");
+
+exports.profileValidate = Joi.object({
+    title: Joi.string().min(5).max(50).required(),
+    fullName: Joi.string().min(5).max(30).required(),
+    nationality:  Joi.string().max(30).required(),
+    birthDay: Joi.date().required(),
+    maritaStatus: Joi.string().valid("Độc thân", "Đã kết hôn").required(),
+    gender: Joi.string().valid("Nam","Nữ").required(),
+    phone:Joi.string().pattern(/^0[35789][0-9]{8}$/),
+    email: Joi.string().max(50).email().required(),
+    address: Joi.string().max(100).required(),
+    educationLevel: Joi.string().required(),
+    nameSchool: Joi.string().required(),
+    major: Joi.string().required(),
+    dateStart: Joi.date().required(),
+    dateFinish: Joi.date().required(),
+    language: Joi.string().max(30).required(),
+    languageLevel: Joi.string().valid("Sơ cấp","Trung cấp","Cao cấp","Thành thạo","Bản ngữ").required(),
+    skill: Joi.string().max(50).required(),
+    skillLevel: Joi.string().valid("Sơ cấp","Trung cấp","Thành thạo").required(),
+    skillDescription: Joi.string().max(100).min(0),
+    desiredPosition: Joi.string().max(50).required(),
+    desiredSalary: Joi.string().max(10).required(),
+    positionType: Joi.string().max(50).required(),
+    careerLevel: Joi.string().max(50).required(),
+    jobType: Joi.string().max(50).required(),
+    location: Joi.string().max(50).required(),
+    creerObjective: Joi.string().max(100).required(),
+    profileStatus: Joi.bool().required()
+})    
