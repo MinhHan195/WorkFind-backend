@@ -30,14 +30,21 @@ exports.signIn = async (req, res, next) => {
             return next(new ApiError(400,"Mat khau khong dung"));
         }
 
-        // B4: Tạo JWS
-        const JWtoken = jwt.sign({ _id: account._id }, process.env.SECRET_CODE);
+        // B4: Tạo JWT
+        const JWTtoken = jwt.sign({ _id: account._id }, process.env.SECRET_CODE);
+        console.log(JWTtoken);
+        // B5: Lưu JWT vào cookie
+        res.cookie("JWT", JWTtoken, {
+            httpOnly: true,  // Ngăn JavaScript truy cập cookie (bảo vệ XSS)
+            secure: false,   // Đặt `true` nếu chạy HTTPS
+            sameSite: "Strict", // Chống CSRF
+            maxAge: 3600000, // 1 giờ
+        });
         // B5: Trả ra thông báo cho người dùng
         account.password = undefined;
         return res.send({
             message: "Dang nhap thanh cong",
             user: account,
-            JWT: JWtoken,
         });
     } catch (error) {
         console.log(error);

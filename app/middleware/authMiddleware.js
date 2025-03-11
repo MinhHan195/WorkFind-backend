@@ -7,15 +7,10 @@ require("dotenv").config();
 
 exports.verifyToken = async (req, res, next) => {
     // B1: Kiểm tra xem header có token hay không
-    const token = req.header("Authorization");
-    // console.log(token);
-    if(!token || !token.startsWith("Bearer ")){
-        return next(new ApiError(401,"Khong co token"));
-    }
-    
+    const token = req.cookies.JWT;
     // B2: kiểm tra token
     try {
-        const decoded = jwt.verify(token.split(" ")[1], process.env.SECRET_CODE);
+        const decoded = jwt.verify(token, process.env.SECRET_CODE);
         const accountService = new AccountService(MongoDB.client);
         const user = await accountService.findById(decoded._id);
         if(!user){

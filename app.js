@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const accountsRouter = require("./app/routers/account.route");
 const jobsRouter = require("./app/routers/job.route");
 const profileRouter = require("./app/routers/profile.route");
@@ -9,6 +10,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 app.get("/", (req, res) => {
     res.json({message: "Welcome to contact book application."});
 });
