@@ -6,12 +6,13 @@ const Joi = require("../validation/user.validate");
 const sendMail = require("../helpers/send.mail");
 const UserService = require("../services/user.service");
 const CompanyService = require("../services/company.service");
+const JobService = require("../services/job.service");
 
 
 exports.changePassword = async (req, res, next) => {
     try {
         // B1: verify token o middleware
-        console.log(req.user);
+        // console.log(req.user);
         // B2: Validate mat khau
         const {value, error} = Joi.passwordValidate.validate(req.body);
         if(error) {
@@ -48,26 +49,34 @@ exports.reset = async (req, res, next) => {
 }
 
 exports.sendRequest = async (req,res,next) => {
-    // B1: Lấy id của tài khoảng bằng email
-    const email = req.body.email;
-    const accountService = new AccountService(MongoDB.client);
-    const account = await accountService.findByEmail(email);
-    const id = account._id;
-    // B2: Gửi mail kèm theo id để xác nhận
-    await sendMail({
-        email: email,
-        subject: "THAY ĐỔI MẬT KHẨU TÀI KHOẢN",
-        html: `
-            <p> Bạn đã sử dụng lệnh "Thiết lập lại mật khẩu" cho tài khoản của bạn trên WorkFind. 
-            Để hoàn thành yêu cầu này, vui lòng nhấn đường link bên dưới. </p>
-            <a href="${process.env.URL}/api/accounts/reset/reset_request?id=${id}">
-            Vui lòng click vào đây để thay đổi mật khẩu
-            </a>
-        `
-    });
+    try {
+        // B1: Lấy id của tài khoảng bằng email
+        const email = req.body.email;
+        const accountService = new AccountService(MongoDB.client);
+        const account = await accountService.findByEmail(email);
+        if(!account){
+            return next(new ApiError(404,"Không tìm thấy tài khoản"));
+        }
+        const id = account._id;
+        // B2: Gửi mail kèm theo id để xác nhận
+        await sendMail({
+            email: email,
+            subject: "THAY ĐỔI MẬT KHẨU TÀI KHOẢN",
+            html: `
+                <p> Bạn đã sử dụng lệnh "Thiết lập lại mật khẩu" cho tài khoản của bạn trên WorkFind. 
+                Để hoàn thành yêu cầu này, vui lòng nhấn đường link bên dưới. </p>
+                <a href="${process.env.URL}/api/accounts/reset/reset_request?id=${id}">
+                Vui lòng click vào đây để thay đổi mật khẩu
+                </a>
+            `
+        });
 
-    return res.send({message: "Send mail successfuly"});
-    
+        return res.send({message: "Send mail successfuly"});
+    } catch (error) {
+        console.log(error);
+        return next(new ApiError(500, "Có lỗi trong quá trình gửi mail xác nhận"))
+    }
+
 }
 
 exports.resetPassword = async (req,res,next) => {
@@ -126,4 +135,25 @@ exports.delete = async (req, res, next) => {
         console.log(error);
         return next(new ApiError(500,"Something wrong when deleting account"));
     }
-}                                                               
+}                                     
+
+exports.fetchListCompany = async (req, res, next) => {
+    try {
+        const companyService = new CompanyService(MongoDB.client);
+        let result = await companyService.find({})
+        const jobService = new JobService(MongoDB.client);
+        result = await Promise.all( //Dùng Promise.all để đợi tất cả các promise trong map hoàn thành
+            result.map(async (company) => {
+                company.totalJob = await jobService.countTotal(company.accountId);
+                return company;
+            })
+        )
+        console.log(result);
+        return res.send(result);
+    } catch (error) {
+        console.log(error);
+        return next(
+            new ApiError(500, `Something wrong when fetch list company`)
+        );
+    }
+}

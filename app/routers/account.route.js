@@ -9,8 +9,12 @@ const router = express.Router();
 router.route("/")
     .post(register.create);
 
-router.route("/signin")
-    .post(auth.signIn);
+router.route("/login")
+    .post(auth.logIn)
+    .get(middleware.verifyToken,auth.getUserData);
+    
+router.route("/login/check")
+    .get(auth.checkLogin);
 
 router.route("/changePassword")
     .post(middleware.verifyToken,account.changePassword);

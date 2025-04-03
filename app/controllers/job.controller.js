@@ -3,6 +3,10 @@ const ApiError = require("../api-error");
 const JobService = require("../services/job.service");
 const MongoDB = require("../utils/mongodb.util");
 const AccountService = require("../services/account.service");
+const UserService = require("../services/user.service");
+const JobTypeService = require("../services/jobtype.service");
+const CareerLevelService = require("../services/careerLevel.service");
+const EducationLevelService = require("../services/educationLevel.service");
 
 
 exports.create = async (req, res, next) => {
@@ -100,11 +104,7 @@ exports.getTotalByUserId = async (req, res, next) => {
 exports.findByFilter = async (req, res, next) => {
     try {
         const jobService = new JobService(MongoDB.client);
-        const document = await jobService.findByFilter(req.query);
-        if(document.length==0){
-            return next(new ApiError(404, "Job not found"));
-        }
-        console.log(document);
+        const document = await jobService.findByFilter(req.body);
         return res.send(document);
     } catch (error) {
         console.log(error);
@@ -116,13 +116,20 @@ exports.findByFilter = async (req, res, next) => {
 
 exports.findByKey = async (req, res, next) => {
     try {
+        const key = req.params.key ? req.params.key.toLowerCase() : undefined;
+        const province = req.params.province ? req.params.province.toLowerCase() : undefined;
+        console.log(key);
         const jobService = new JobService(MongoDB.client);
-        const document = await jobService.findByKey(req.params.key);
-        if(document.length==0){
-            return next(new ApiError(404, "Job not found"));
-        }
-        console.log(document);
-        return res.send(document);
+        const document = await jobService.find({});
+        const string = jobService.jobToString(document);
+        console.log(string);
+        const result = document.filter((job, index) => {
+            console.log("Key: ",string[index].includes(key))
+            console.log("Province: ",string[index].includes(province))
+            return (string[index].includes(key) || string[index].includes(province))
+        })
+        
+        return res.send(result);
     } catch (error) {
         console.log(error);
         return next(
@@ -131,14 +138,13 @@ exports.findByKey = async (req, res, next) => {
     }
 }
 
-exports.findByProvince = async (req, res, next) => {
+exports.findAll = async (req,res,next) => {
     try {
         const jobService = new JobService(MongoDB.client);
-        const document = await jobService.findByProvince(req.params.province);
+        const document = await jobService.find({});
         if(document.length==0){
             return next(new ApiError(404, "Job not found"));
         }
-        console.log(document);
         return res.send(document);
     } catch (error) {
         console.log(error);
@@ -169,6 +175,46 @@ exports.delete = async (req, res, next) => {
         console.log(error);
         return next(
             new ApiError(500, `Something wrong when deleting the job`)
+        );
+    }
+}
+
+exports.getListJobFavorite = async (req, res, next) => {
+    try {
+        // B1: Kiểm tra JWT lấy id account
+        // B2: Lấy danh sách favorite job 
+        const userService = new UserService(MongoDB.client);
+        const user = (await userService.findByAccountId(req.user._id));
+        // B3: Kiểm tra và trả về cho người dùng
+        if(user.listFavoriteJobs === undefined){
+            return res.send([]);
+        }
+        return res.send(user.listFavoriteJobs);
+    } catch (error) {
+        console.log(error);
+        return next(
+            new ApiError(500, `Something wrong when get list favorite jobs`)
+        );
+    }
+}
+
+exports.getJobFilter = async (req, res, next) => {
+    try {
+        let result = {};
+        const jobTypeService = new JobTypeService(MongoDB.client);
+        const list = await jobTypeService.find({});
+        const careerLevelService = new CareerLevelService(MongoDB.client);
+        const careerLevel = await careerLevelService.find({});
+        const educationLevelService = new EducationLevelService(MongoDB.client);
+        const educationLevel = await educationLevelService.find({});
+        result.jobType = list;
+        result.careerLevel = careerLevel;
+        result.educationLevel = educationLevel;
+        return res.send(result);
+    } catch (error) {
+        console.log(error);
+        return next(
+            new ApiError(500, `Something wrong when get the list job type`)
         );
     }
 }

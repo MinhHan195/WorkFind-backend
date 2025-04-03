@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 const accountsRouter = require("./app/routers/account.route");
 const jobsRouter = require("./app/routers/job.route");
 const profileRouter = require("./app/routers/profile.route");
+const companyRouter = require("./app/routers/company.route");
 const ApiError = require("./app/api-error");
 
 const app = express();
@@ -20,6 +21,8 @@ app.use("/api/accounts", accountsRouter);
 app.use("/api/jobs", jobsRouter);
 
 app.use("/api/profiles", profileRouter);
+
+app.use("/api/company", companyRouter);
 
 app.use((req, res, next) => {
     return next(new ApiError(404, "Resource not found"));

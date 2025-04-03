@@ -5,23 +5,26 @@ const middleware = require("../middleware/authMiddleware");
 const router = express.Router();
 
 router.route("/")
-    .post(middleware.verifyToken,job.create);
+    .post(middleware.verifyToken,job.create)
+    .get(job.findAll);
+
+router.route("/favorite")
+    .get(middleware.verifyToken, job.getListJobFavorite);
 
 router.route("/fetch")
-    .get(job.findByFilter);
-
-router.route("/fetch/location/:province")
-    .get(job.findByProvince);
-
-router.route("/fetch/:key")
-    .get(job.findByKey);
+    .post(job.findByFilter);
 
 router.route("/fetch/total/:userId")
     .get(job.getTotalByUserId);
 
+router.route("/fetch/:key?/:province?")
+    .get(job.findByKey);
 
-router.route("/fetch/:userId")
-    .get(job.findByUserId);
+// router.route("/fetch/:userId")
+//     .get(job.findByUserId);
+
+router.route("/filter")
+    .get(job.getJobFilter);
 
 router.route("/:id")
     .post(middleware.verifyToken, job.update)

@@ -16,10 +16,20 @@ const Joi = require("../validation/user.validate");
 exports.create = async (req, res, next) => {
     try{
         // B1: Validate phia sever
-        const {value, error} = Joi.registerValidate.validate(req.body);
-        if(error){
-            return next(new ApiError(400,error.details[0].message));
+        if(req.body.role==="user"){
+            const {value, error} = Joi.registerUserValidate.validate(req.body);
+            if(error){
+                return next(new ApiError(400,error.details[0].message));
         }
+        }else if(req.body.role==="company"){
+            const {value, error} = Joi.registerCompanyValidate.validate(req.body);
+            if(error){
+                return next(new ApiError(400,error.details[0].message));
+        }
+        }else{
+            return next(new ApiError(403,"Loi khong the tạo tai khoan"));
+        }
+        
         // B2: Kiem tra tai khoan co ton tai khong
         const accountService = new AccountService(MongoDB.client);
         const result = await accountService.findByEmail(req.body.email);

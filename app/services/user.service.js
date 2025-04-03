@@ -21,6 +21,17 @@ class UserService{
         return user;
     }
 
+    async find(filter) {
+        const result = await this.Contact.findOne(filter);
+        return result;
+    }
+
+    async findByAccountId(id) {
+        return await this.find({
+            accountId: ObjectId.isValid(id) ? new ObjectId(id) : null
+        });
+    }
+
     async create(payload, id) {
         const user = await this.extractUserData(payload, id);
         const result = await this.Contact.insertOne(user);

@@ -1,5 +1,6 @@
 const { object } = require("joi");
 const {ObjectId} = require("mongodb");
+const {sub} = require("date-fns");
 
 class JobService {
     constructor(client) {
@@ -14,7 +15,8 @@ class JobService {
             urlWebSite: payload.urlWebSitew,
             companyDescription: payload.companyDescription,
             jobName: payload.jobName,
-            address: payload.address,
+            province: payload.province,
+            district:payload.district,
             jobDescription: payload.jobDescription,
             benefits: payload.benefits,
             salary: payload.salary,
@@ -23,13 +25,13 @@ class JobService {
             careerLevel: payload.careerLevel,
             positionType: payload.positionType,
             gender: payload.gender,
-            typeJob: payload.groupJob,
+            typeJob: payload.typeJob,
             addressContact: payload.addressContact,
             staffName: payload.staffName,
             phone: payload.phone,
             attention: payload.attention,
-            dateTimeCreate: new Date().toLocaleString(),
-            dateTimeUpdate: new Date().toLocaleString(),
+            dateTimeCreate: new Date(),
+            dateTimeUpdate: new Date(),
         };
         Object.keys(job).forEach(
             (key) => job[key] === undefined && delete job[key]
@@ -55,11 +57,35 @@ class JobService {
     }
 
     async findByFilter(payload){
-        const job = await this.extractJobData(payload);
-        delete job.dateTimeCreate;
-        delete job.dateTimeUpdate;
-        console.log(job);
-        return await this.find(job);
+        const filter = [];
+        Object.entries(payload).forEach(([key, value]) => {
+            if(key!=="maxSalary" && key!=="minSalary" && key!=="dateTimeCreate"){
+                const temp = {}
+                temp[key] = {$in: Array.isArray(value) ? value : [value]}
+                filter.push(temp);
+            }
+        })
+        if(payload.minSalary!== undefined && payload.maxSalary!== undefined && payload.minSalary!=0 && payload.maxSalary!=100 ){
+            console.log(true);
+            filter.push({salary: {$gt:payload.minSalary, $lt: payload.maxSalary}})
+        }
+        if(payload.dateTimeCreate!==undefined){
+            const now = new Date();
+            if(payload.dateTimeCreate==="Hôm nay"){
+                filter.push({dateTimeCreate: {$gte:sub(now, {days: 1}), $lt: now}})
+            }else if(payload.dateTimeCreate==="3 ngày"){
+                filter.push({dateTimeCreate: {$gte: sub(now, {days: 3}), $lt: now}})
+            }else if(payload.dateTimeCreate==="1 tuần"){
+                filter.push({dateTimeCreate: {$gte: sub(now, {weeks: 1}), $lt: now}})
+            }else if(payload.dateTimeCreate==="2 tuần"){
+                filter.push({dateTimeCreate: {$gte: sub(now, {weeks: 2}), $lt: now}})
+            }else if(payload.dateTimeCreate==="1 tháng"){
+                filter.push({dateTimeCreate: {$gte: sub(now, {months: 1}), $lt: now}})
+            }
+        }
+        console.log(filter);
+        const cursor = await this.Contact.find({$or: filter})
+        return await cursor.toArray()
     }
 
     async create(payload, id){
@@ -86,9 +112,9 @@ class JobService {
         return await this.Contact.countDocuments({ idUser: id });
     }
 
-    async findByKey(key) {
-        return await this.find({
-            jobName: { $regex: new RegExp(new RegExp(key)), $options: "i"},
+    jobToString(list){
+        return list.map((job) => {
+            return [job.nameCompany, job.staffNumber, job.jobName, job.province, job.district, job.benefits, job.salary, job.educationLevel, job.experienceLevel, job.careerLevel, job.positionType, job.gender].join(" ").toLowerCase();
         })
     }
 

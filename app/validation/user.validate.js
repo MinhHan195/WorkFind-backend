@@ -5,7 +5,7 @@ exports.signInValidate = Joi.object({
     password:Joi.string().min(6).max(30).required(),
 })
 
-exports.registerValidate = Joi.object({
+exports.registerUserValidate = Joi.object({
     name: Joi.string().min(3).max(50).required(),
     email: Joi.string().email().required(),
     role: Joi.string().valid("company", "user").required(),
@@ -14,6 +14,23 @@ exports.registerValidate = Joi.object({
         .valid(Joi.ref("password")) // Kiểm tra confirmPassword phải giống password
         .required()
         .messages({ "ConfirmPassword": "Mật khẩu xác nhận không khớp!" }),
+})
+
+exports.registerCompanyValidate = Joi.object({
+    nameCompany: Joi.string().min(3).max(100).required(),
+    email: Joi.string().email().required(),
+    address: Joi.string().min(3).max(100).required(),
+    province: Joi.string().max(20).required(),
+    district: Joi.string().max(20).required(),
+    phone: Joi.string().pattern(/^0[35789][0-9]{8}$/),
+    password: Joi.string().min(6).max(30).required(),
+    confirmPassword: Joi.string()
+        .valid(Joi.ref("password")) // Kiểm tra confirmPassword phải giống password
+        .required()
+        .messages({ "ConfirmPassword": "Mật khẩu xác nhận không khớp!" }),
+    totalEmployees: Joi.number().required(),
+    description: Joi.string().required(),
+    role: Joi.string().valid("company", "user").required(),
 })
 
 exports.passwordValidate = Joi.object({
