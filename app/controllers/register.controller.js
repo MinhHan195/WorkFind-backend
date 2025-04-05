@@ -15,6 +15,7 @@ const Joi = require("../validation/user.validate");
 
 exports.create = async (req, res, next) => {
     try{
+        console.log(req.body);
         // B1: Validate phia sever
         if(req.body.role==="user"){
             const {value, error} = Joi.registerUserValidate.validate(req.body);
@@ -34,7 +35,7 @@ exports.create = async (req, res, next) => {
         const accountService = new AccountService(MongoDB.client);
         const result = await accountService.findByEmail(req.body.email);
         if(result){
-            return res.send({message: "Email đã tồn tại tài khoản"});
+            return next(new ApiError(409, "Email đã tồn tại"))
         }
 
         // B3: Tạo mã kích hoạt tài khoản
@@ -43,29 +44,40 @@ exports.create = async (req, res, next) => {
         // B4: Tạo tài khoản với mã kích hoạt
         const document = await accountService.create(req.body, token);
 
-        // B5: Tạo record lưu thông tin khác của user tài khoản
-        if(req.body.role==="user"){
-            const userService = new UserService(MongoDB.client);
-            await userService.create(req.body, document.insertedId);
-        }else if(req.body.role==="company"){
-            const companyService = new CompanyService(MongoDB.client);
-            await companyService.create(req.body, document.insertedId);
+        if(document.acknowledged){
+            // B5: Tạo record lưu thông tin khác của user tài khoản
+            if(req.body.role==="user"){
+                const userService = new UserService(MongoDB.client);
+                await userService.create(req.body, document.insertedId);
+            }else if(req.body.role==="company"){
+                const companyService = new CompanyService(MongoDB.client);
+                await companyService.create(req.body, document.insertedId);
+            }
+
+            // B6: Gửi mail kích hoạt tài khoảng
+            await sendMail({
+                email: req.body.email,
+                subject: "KÍCH HOẠT TÀI KHOẢN",
+                html: `
+                    <h1> Cảm ơn bạn đã đăng ký tài khoản </h1>
+                    <a href="${process.env.URL_FRONTEND}/auth/login?token=${token}&id=${document.insertedId}">
+                    Vui lòng click vào đây để kích hoạt tài khoản
+                    </a>
+                `
+            })
+
+            // B7: Thông báo cho người dùng tại tài khoảng thành công
+            return res.send({
+                result: true,
+                message: "Tạo tài khoản thành công"
+            });
         }
+        return res.send({
+            result: false,
+            message: "Tạo tài khoản không thành công"
+        });
 
-        // B6: Gửi mail kích hoạt tài khoảng
-        await sendMail({
-            email: req.body.email,
-            subject: "KÍCH HOẠT TÀI KHOẢN",
-            html: `
-                <h1> Cảm ơn bạn đã đăng ký tài khoản </h1>
-                <a href="${process.env.URL}/api/accounts/verify?token=${token}&id=${document.insertedId}">
-                Vui lòng click vào đây để kích hoạt tài khoản
-                </a>
-            `
-        })
-
-        // B7: Thông báo cho người dùng tại tài khoảng thành công
-        return res.send(document);
+        
     }catch(error) {
         console.log(error);
         return next(
@@ -82,11 +94,11 @@ exports.verify = async (req, res, next) => {
     try{
         const account = await accountService.findById(id);
         if(!account) {
-            return next(new ApiError(404, `Account not found`));
+            return next(new ApiError(409, `Không tìm thấy tài khoản`));
         }
         const timeCreated = addMinutes(account.dateTimeCreate, 10);
         if(account.activeStatus) {
-            return res.send({message: "Tài khoản đã được kích hoạt trước đó"});
+            return next(new ApiError(410,"Tài khoản đã được kích hoạt trước đó"));
         }
         if(isAfter(new Date().toLocaleString(), timeCreated)){
             if(account.role==="user"){
@@ -97,11 +109,14 @@ exports.verify = async (req, res, next) => {
                 await companyService.deleteCompany(id);
             }
             await accountService.deleteAccount(id);
-            return res.send({message: "Tài khoản đã hết thời hạn kích hoạt, vui lòng tạo tài khoản khác!"});
+            return next(new ApiError(403, "Tài khoản đã hết thời hạn kích hoạt, vui lòng tạo tài khoản khác!"));
         }
         else if(token === account.token){
             await accountService.activateAccount(id);
-            return res.send({message: "Tài khoản đã được kích hoạt thành công!"});
+            return res.send({
+                message: "Tài khoản đã được kích hoạt thành công!",
+                result: true
+            });
         }
         return  next(new ApiError(422,"Token không hợp lệ"));
     }catch(error) {

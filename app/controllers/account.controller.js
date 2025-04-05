@@ -65,13 +65,13 @@ exports.sendRequest = async (req,res,next) => {
             html: `
                 <p> Bạn đã sử dụng lệnh "Thiết lập lại mật khẩu" cho tài khoản của bạn trên WorkFind. 
                 Để hoàn thành yêu cầu này, vui lòng nhấn đường link bên dưới. </p>
-                <a href="${process.env.URL}/api/accounts/reset/reset_request?id=${id}">
+                <a href="${process.env.URL_FRONTEND}/check/reset_password/${id}">
                 Vui lòng click vào đây để thay đổi mật khẩu
                 </a>
             `
         });
 
-        return res.send({message: "Send mail successfuly"});
+        return res.send({result: true});
     } catch (error) {
         console.log(error);
         return next(new ApiError(500, "Có lỗi trong quá trình gửi mail xác nhận"))
@@ -91,16 +91,16 @@ exports.resetPassword = async (req,res,next) => {
         const accountService = new AccountService(MongoDB.client);
         const result = await accountService.changePassword(req.body.userId, req.body.newPassword);
         if(!result) {
-            return next(new ApiError(404,"Account not found"));
+            return next(new ApiError(404,"Lỗi không tìm thấy tài khoản"));
         }
         // B3: Thong bao
         return res.send({
-            message: "Change password successfuly",
-            result
+            message: "Đổi mật khẩu thành công",
+            result: true
         });
     } catch (error) {
         console.log(error);
-        return next(new ApiError(500,"Something wrong when changing password"));
+        return next(new ApiError(500,"Có lỗi xảy ra trong quá trình đặt lại mật khẩu"));
     }
 }
 
@@ -148,7 +148,6 @@ exports.fetchListCompany = async (req, res, next) => {
                 return company;
             })
         )
-        console.log(result);
         return res.send(result);
     } catch (error) {
         console.log(error);

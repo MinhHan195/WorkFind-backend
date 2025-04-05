@@ -20,16 +20,16 @@ exports.logIn = async (req, res, next) => {
         const accountService = new AccountService(MongoDB.client);
         const account = await accountService.findByEmail(req.body.email);
         if(!account){
-            return res.send({message: "Khong tim thay account"});
+            return next(new ApiError(404, "Không tìm thấy tài khoản"));
         }
         else if(!account.activeStatus){
-            return res.send({message: "Tai khoan chua duoc kich hoat"});
+            return next(new ApiError(403, "Tài khoản chưa được kích hoạt"));
         }
         
         // B3: Kiểm tra password
         const isMatch = bcrypt.compare(req.body.password, account.password);
         if(!isMatch){
-            return next(new ApiError(400,"Mat khau khong dung"));
+            return next(new ApiError(400,"Mật khẩu không chính xác"));
         }
 
         // B4: Tạo JWT
@@ -42,11 +42,19 @@ exports.logIn = async (req, res, next) => {
             sameSite: "Strict", // Chống CSRF
             maxAge: 3600000, // 1 giờ
         });
-        // B5: Trả ra thông báo cho người dùng
+
+        // B5: Lấy thông tin người dùng
+        const userService = new UserService(MongoDB.client);
+        const user = await userService.findByAccountId(account._id);
+        delete user.dateTimeCreate;
+        delete user.dateTimeUpdate;
+        user.role = account.role
+        // B6: Trả ra thông báo cho người dùng
         account.password = undefined;
         return res.send({
-            message: "Dang nhap thanh cong",
-            user: account,
+            result: true,
+            message: "Đăng nhập thành công",
+            user: user,
         });
     } catch (error) {
         console.log(error);
