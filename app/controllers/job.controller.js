@@ -186,10 +186,16 @@ exports.getListJobFavorite = async (req, res, next) => {
         const userService = new UserService(MongoDB.client);
         const user = (await userService.findByAccountId(req.user._id));
         // B3: Kiểm tra và trả về cho người dùng
-        if(user.listFavoriteJobs === undefined){
+        if(user.listUserFavoriteJob === undefined){
             return res.send([]);
         }
-        return res.send(user.listFavoriteJobs);
+        const jobService = new JobService(MongoDB.client);
+        const result = [];
+        for(let index in user.listUserFavoriteJob){
+            const job = await jobService.findById(user.listUserFavoriteJob[index]);
+            result.push(job);
+        }
+        return res.send(result);
     } catch (error) {
         console.log(error);
         return next(
@@ -215,6 +221,44 @@ exports.getJobFilter = async (req, res, next) => {
         console.log(error);
         return next(
             new ApiError(500, `Something wrong when get the list job type`)
+        );
+    }
+}
+
+exports.addJobFavorite = async (req, res, next) => {
+    try {
+        const userService = new UserService(MongoDB.client);
+        const result = await userService.addJobFavorite(req.user._id, req.body.jobId);
+        if(!result){
+            return next(new ApiError(404, "Không tìm thấy người dùng"))
+        }
+        return res.send({
+            result: true,
+        })
+    } catch (error) {
+        console.log(error);
+        return next(
+            new ApiError(500, "Có lỗi trongg khi lưu trữ công việc")
+        );
+    }
+}
+
+exports.deleteJobFavorite = async (req, res, next) => {
+    try {
+        console.log(req.params.jobId);
+        const userService = new UserService(MongoDB.client);
+        const result = await userService.deleteJobFavorite(req.user._id, req.params.jobId);
+        console.log(result);
+        if(!result){
+            return next(new ApiError(404, "Không tìm thấy người dùng"))
+        }
+        return res.send({
+            result: true,
+        })
+    } catch (error) {
+        console.log(error);
+        return next(
+            new ApiError(500, "Có lỗi trongg khi lưu trữ công việc")
         );
     }
 }

@@ -30,7 +30,8 @@ router.route("/verify")
     .get(register.verify);
 
 router.route("/:id")
-    .delete(middleware.verifyToken,account.delete);
+    .delete(middleware.verifyToken,account.delete)
+    .post(middleware.verifyToken,account.update);
 
 
 

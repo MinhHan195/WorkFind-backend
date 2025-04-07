@@ -13,8 +13,8 @@ class AccountService {
             role: payload.role,
             activeStatus: false,
             token: hashToken,
-            dateTimeCreate: new Date().toLocaleString(),
-            dateTimeUpdate: new Date().toLocaleString(),
+            dateTimeCreate: new Date(),
+            dateTimeUpdate: new Date(),
         };
 
         return account;
@@ -47,7 +47,7 @@ class AccountService {
             { 
                 $set: {
                     activeStatus: true,
-                    dateTimeUpdate: new Date().toLocaleString(),
+                    dateTimeUpdate: new Date(),
                 },
                 $unset: {
                     token: "",

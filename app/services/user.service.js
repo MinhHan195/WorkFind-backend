@@ -11,9 +11,13 @@ class UserService{
             name: payload.name,
             email: payload.email,
             gender: payload.gender,
-            maritalStatus: payload.maritalStatus,
+            marriageStatus: payload.marriageStatus,
             phone: payload.phone,
-            address: payload.address,
+            birthDay: payload.birthDay,
+            nation: payload.nation,
+            province: payload.province,
+            district: payload.district,
+            address: payload.address
         };
         Object.keys(user).forEach(
             (key) => user[key] === undefined && delete user[key]
@@ -24,6 +28,12 @@ class UserService{
     async find(filter) {
         const result = await this.Contact.findOne(filter);
         return result;
+    }
+
+    async findById(id){
+        return await this.find({
+            _id: ObjectId.isValid(id) ? new ObjectId(id) : null
+        })
     }
 
     async findByAccountId(id) {
@@ -43,6 +53,34 @@ class UserService{
             accountId: ObjectId.isValid(id) ? new ObjectId(id) : null,
         });
         return result;
+    }
+    async update(payload, id){
+        const user = await this.extractUserData(payload)
+        console.log(user)
+        const filter = {
+            _id: ObjectId.isValid(id) ? new ObjectId(id) : null
+        }
+        return await this.Contact.findOneAndUpdate(
+            filter,
+            { $set: user},
+            { returnDocument: "after"}
+        )
+    } 
+
+    async addJobFavorite(accountId, jobId){
+        return await this.Contact.findOneAndUpdate(
+            {accountId: ObjectId.isValid(accountId) ? new ObjectId(accountId) : null},
+            { $addToSet: {listUserFavoriteJob: jobId}},
+            { returnDocument: "after"}
+        )
+    }
+
+    async deleteJobFavorite(accountId, jobId){
+        return await this.Contact.findOneAndUpdate(
+            {accountId: ObjectId.isValid(accountId) ? new ObjectId(accountId) : null},
+            { $pull: {listUserFavoriteJob: jobId}},
+            { returnDocument: "after"}
+        )
     }
 }
 

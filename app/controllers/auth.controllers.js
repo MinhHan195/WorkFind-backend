@@ -10,7 +10,7 @@ const bcrypt = require("bcrypt");
 require('dotenv').config();
 
 exports.logIn = async (req, res, next) => {
-    try {
+    try{
         // B1: Validate phía server
         const {value, error} = Joi.signInValidate.validate(req.body);
         if(error){
@@ -27,7 +27,10 @@ exports.logIn = async (req, res, next) => {
         }
         
         // B3: Kiểm tra password
-        const isMatch = bcrypt.compare(req.body.password, account.password);
+        const isMatch = await bcrypt.compare(req.body.password, account.password);
+        
+        console.log(isMatch)
+
         if(!isMatch){
             return next(new ApiError(400,"Mật khẩu không chính xác"));
         }
@@ -46,10 +49,10 @@ exports.logIn = async (req, res, next) => {
         // B5: Lấy thông tin người dùng
         const userService = new UserService(MongoDB.client);
         const user = await userService.findByAccountId(account._id);
-        delete user.dateTimeCreate;
-        delete user.dateTimeUpdate;
         user.role = account.role
         // B6: Trả ra thông báo cho người dùng
+        user.dateTimeCreate = account.dateTimeCreate,
+        user.dateTimeUpdate = account.dateTimeUpdate,
         account.password = undefined;
         return res.send({
             result: true,

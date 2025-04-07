@@ -23,19 +23,22 @@ exports.changePassword = async (req, res, next) => {
         const account = await accountService.findById(req.user._id);
         const isMatch = await bcrypt.compare(req.body.oldPassword, account.password);
         if(!isMatch){
-            return next(new ApiError(400,"Mat khau hien tai khong dung"));
+            return next(new ApiError(400,"Mật khẩu hiện tại không đúng"));
         }
         // B4: doi mat khau
         const result = await accountService.changePassword(req.user._id, req.body.newPassword);
         if(!result) {
-            return next(new ApiError(404,"Account not found"));
+            return next(new ApiError(404,"Không tìm thấy tài khoản"));
         }
 
-        return res.send(result);
+        return res.send({
+            result: true,
+            message: "Đổi mật khẩu thành công"
+        });
         // B5: thong bao
     } catch (error) {
         console.log(error);
-        return next(new ApiError(500,"Something wrong when changing the password"));
+        return next(new ApiError(500,"Có lỗi xảy ra trong khi đổi mật khẩu"));
     }
 }
 
@@ -112,7 +115,7 @@ exports.delete = async (req, res, next) => {
     try {
         // B1: verify JWT
         if(req.params.id!==req.user._id){
-            return next(new ApiError(400,"Access denied"))
+            return next(new ApiError(400,"Không có quyền xóa"))
         }
         // B2: Lấy thông tin về role của account 
         const accountService = new AccountService(MongoDB.client);
@@ -126,14 +129,14 @@ exports.delete = async (req, res, next) => {
             await companyService.deleteByAccountId(req.user._id);
         }
         // B4: Xóa tài khoảng
-        const result = await accountService.deleteAccount(req.user._id);
+        const document = await accountService.deleteAccount(req.user._id);
         return res.send({
-            message: "Delete account successfuly",
-            result
+            message: "Xóa tài khoản thành công",
+            result: true,
         });
     } catch (error) {
         console.log(error);
-        return next(new ApiError(500,"Something wrong when deleting account"));
+        return next(new ApiError(500,"Có lỗi xảy ra trong lúc xóa tài khoản"));
     }
 }                                     
 
@@ -153,6 +156,33 @@ exports.fetchListCompany = async (req, res, next) => {
         console.log(error);
         return next(
             new ApiError(500, `Something wrong when fetch list company`)
+        );
+    }
+}
+
+exports.update = async (req, res, next) => {
+    try {
+        // B1: so sánh id trong JWT với id trong params
+        const userService = new UserService(MongoDB.client);
+        const user = await userService.findById(req.params.id);
+        if(user.accountId.toString() !== req.user._id){
+            return next(new ApiError(403, 'Tài khoản không hợp lệ'));
+        }
+        const document = await userService.update(req.body, req.params.id);
+        // console.log(document);
+        if(!document){
+            return next(new ApiError(404, 'Không tìm thấy tài khoản'));
+        }
+        return res.send({
+            result: true,
+            message: "Cập nhật thành công",
+            user: document
+        })
+        // B2: Cập nhật
+    } catch (error) {
+        console.log(error);
+        return next(
+            new ApiError(500, `Something wrong when update user`)
         );
     }
 }

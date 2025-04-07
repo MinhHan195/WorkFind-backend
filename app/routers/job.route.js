@@ -9,7 +9,11 @@ router.route("/")
     .get(job.findAll);
 
 router.route("/favorite")
-    .get(middleware.verifyToken, job.getListJobFavorite);
+    .get(middleware.verifyToken, job.getListJobFavorite)
+    .post(middleware.verifyToken, job.addJobFavorite);
+
+router.route("/delete_favorite/:jobId")
+    .delete(middleware.verifyToken, job.deleteJobFavorite);
 
 router.route("/fetch")
     .post(job.findByFilter);
