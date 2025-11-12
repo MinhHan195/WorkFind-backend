@@ -10,31 +10,30 @@ const CompanyService = require("../services/company.service");
 const sendMail = require("../helpers/send.mail");
 
 const bcrypt = require("bcrypt");
-const {addMinutes, isAfter} = require("date-fns");
+const { addMinutes, isAfter } = require("date-fns");
 const Joi = require("../validation/user.validate");
 
 exports.create = async (req, res, next) => {
-    try{
-        console.log(req.body);
+    try {
         // B1: Validate phia sever
-        if(req.body.role==="user"){
-            const {value, error} = Joi.registerUserValidate.validate(req.body);
-            if(error){
-                return next(new ApiError(400,error.details[0].message));
+        if (req.body.role === "user") {
+            const { value, error } = Joi.registerUserValidate.validate(req.body);
+            if (error) {
+                return next(new ApiError(400, error.details[0].message));
+            }
+        } else if (req.body.role === "company") {
+            const { value, error } = Joi.registerCompanyValidate.validate(req.body);
+            if (error) {
+                return next(new ApiError(400, error.details[0].message));
+            }
+        } else {
+            return next(new ApiError(403, "Loi khong the tạo tai khoan"));
         }
-        }else if(req.body.role==="company"){
-            const {value, error} = Joi.registerCompanyValidate.validate(req.body);
-            if(error){
-                return next(new ApiError(400,error.details[0].message));
-        }
-        }else{
-            return next(new ApiError(403,"Loi khong the tạo tai khoan"));
-        }
-        
+
         // B2: Kiem tra tai khoan co ton tai khong
         const accountService = new AccountService(MongoDB.client);
         const result = await accountService.findByEmail(req.body.email);
-        if(result){
+        if (result) {
             return next(new ApiError(409, "Email đã tồn tại"))
         }
 
@@ -44,12 +43,12 @@ exports.create = async (req, res, next) => {
         // B4: Tạo tài khoản với mã kích hoạt
         const document = await accountService.create(req.body, token);
 
-        if(document.acknowledged){
+        if (document.acknowledged) {
             // B5: Tạo record lưu thông tin khác của user tài khoản
-            if(req.body.role==="user"){
+            if (req.body.role === "user") {
                 const userService = new UserService(MongoDB.client);
                 await userService.create(req.body, document.insertedId);
-            }else if(req.body.role==="company"){
+            } else if (req.body.role === "company") {
                 const companyService = new CompanyService(MongoDB.client);
                 await companyService.create(req.body, document.insertedId);
             }
@@ -77,54 +76,54 @@ exports.create = async (req, res, next) => {
             message: "Tạo tài khoản không thành công"
         });
 
-        
-    }catch(error) {
+
+    } catch (error) {
         console.log(error);
         return next(
             new ApiError(500, "Co loi trong khi tao tai khoan")
         );
     }
-}; 
+};
 
 exports.verify = async (req, res, next) => {
     const queryParams = req.query;
     const token = queryParams.token;
     const id = queryParams.id;
     const accountService = new AccountService(MongoDB.client);
-    try{
+    try {
         const account = await accountService.findById(id);
-        if(!account) {
+        if (!account) {
             return next(new ApiError(409, `Không tìm thấy tài khoản`));
         }
         const timeCreated = addMinutes(account.dateTimeCreate, 10);
-        if(account.activeStatus) {
-            return next(new ApiError(410,"Tài khoản đã được kích hoạt trước đó"));
+        if (account.activeStatus) {
+            return next(new ApiError(410, "Tài khoản đã được kích hoạt trước đó"));
         }
-        if(isAfter(new Date().toLocaleString(), timeCreated)){
-            if(account.role==="user"){
+        if (isAfter(new Date().toLocaleString(), timeCreated)) {
+            if (account.role === "user") {
                 const userService = new UserService(MongoDB.client);
                 await userService.deleteUser(id);
-            }else if(account.role==="company"){
+            } else if (account.role === "company") {
                 const companyService = new CompanyService(MongoDB.client);
                 await companyService.deleteCompany(id);
             }
             await accountService.deleteAccount(id);
             return next(new ApiError(403, "Tài khoản đã hết thời hạn kích hoạt, vui lòng tạo tài khoản khác!"));
         }
-        else if(token === account.token){
+        else if (token === account.token) {
             await accountService.activateAccount(id);
             return res.send({
                 message: "Tài khoản đã được kích hoạt thành công!",
                 result: true
             });
         }
-        return  next(new ApiError(422,"Token không hợp lệ"));
-    }catch(error) {
+        return next(new ApiError(422, "Token không hợp lệ"));
+    } catch (error) {
         console.log(error);
         return next(
             new ApiError(500, `Error activate account with id=${req.params.id}`)
         );
     }
-    
+
 
 }

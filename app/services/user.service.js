@@ -1,11 +1,11 @@
-const {ObjectId} = require("mongodb");
+const { ObjectId } = require("mongodb");
 
-class UserService{
+class UserService {
     constructor(client) {
         this.Contact = client.db().collection("user");
     }
 
-    async extractUserData(payload, id){
+    async extractUserData(payload, id) {
         const user = {
             accountId: id,
             name: payload.name,
@@ -17,7 +17,12 @@ class UserService{
             nation: payload.nation,
             province: payload.province,
             district: payload.district,
-            address: payload.address
+            address: payload.address,
+            cvUrl: payload.cvUrl,
+            cvPublicId: payload.cvPublicId,
+            cvName: payload.cvName,
+            listUserFavoriteJob: [],
+            listCv: [],
         };
         Object.keys(user).forEach(
             (key) => user[key] === undefined && delete user[key]
@@ -30,7 +35,7 @@ class UserService{
         return result;
     }
 
-    async findById(id){
+    async findById(id) {
         return await this.find({
             _id: ObjectId.isValid(id) ? new ObjectId(id) : null
         })
@@ -48,38 +53,53 @@ class UserService{
         return result;
     }
 
-    async deleteByAccountId(id){
+    async deleteByAccountId(id) {
         const result = await this.Contact.findOneAndDelete({
             accountId: ObjectId.isValid(id) ? new ObjectId(id) : null,
         });
         return result;
     }
-    async update(payload, id){
+    async update(payload, id) {
         const user = await this.extractUserData(payload)
-        console.log(user)
         const filter = {
             _id: ObjectId.isValid(id) ? new ObjectId(id) : null
         }
         return await this.Contact.findOneAndUpdate(
             filter,
-            { $set: user},
-            { returnDocument: "after"}
-        )
-    } 
-
-    async addJobFavorite(accountId, jobId){
-        return await this.Contact.findOneAndUpdate(
-            {accountId: ObjectId.isValid(accountId) ? new ObjectId(accountId) : null},
-            { $addToSet: {listUserFavoriteJob: jobId}},
-            { returnDocument: "after"}
+            { $set: user },
+            { returnDocument: "after" }
         )
     }
 
-    async deleteJobFavorite(accountId, jobId){
+    async addJobFavorite(accountId, jobId) {
         return await this.Contact.findOneAndUpdate(
-            {accountId: ObjectId.isValid(accountId) ? new ObjectId(accountId) : null},
-            { $pull: {listUserFavoriteJob: jobId}},
-            { returnDocument: "after"}
+            { accountId: ObjectId.isValid(accountId) ? new ObjectId(accountId) : null },
+            { $addToSet: { listUserFavoriteJob: jobId } },
+            { returnDocument: "after" }
+        )
+    }
+
+    async deleteJobFavorite(accountId, jobId) {
+        return await this.Contact.findOneAndUpdate(
+            { accountId: ObjectId.isValid(accountId) ? new ObjectId(accountId) : null },
+            { $pull: { listUserFavoriteJob: jobId } },
+            { returnDocument: "after" }
+        )
+    }
+
+    async addCV(accountId, ObjCv) {
+        return await this.Contact.findOneAndUpdate(
+            { accountId: ObjectId.isValid(accountId) ? new ObjectId(accountId) : null },
+            { $addToSet: { listCv: ObjCv } },
+            { returnDocument: "after" }
+        )
+    }
+
+    async deleteCV(accountId, ObjCv) {
+        return await this.Contact.findOneAndUpdate(
+            { accountId: ObjectId.isValid(accountId) ? new ObjectId(accountId) : null },
+            { $pull: { listCv: ObjCv } },
+            { returnDocument: "after" }
         )
     }
 }

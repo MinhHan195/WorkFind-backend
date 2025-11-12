@@ -10,28 +10,32 @@ const EducationLevelService = require("../services/educationLevel.service");
 
 
 exports.create = async (req, res, next) => {
-    try{
+    try {
         // B1: kiem tra token trong MiddleWare và kiểm tra id
         const id = req.user._id;
         const accountService = new AccountService(MongoDB.client);
-        const result =  await accountService.findById(id);
-        if(!result || result.role!=="company"){
+        const result = await accountService.findById(id);
+        if (!result || result.role !== "company") {
             return next(new ApiError(403, "Tài khoản không hợp lệ"))
         }
         // B2: validate thong tin
-        const {value, error} = Joi.jobValidate.validate(req.body);
-        if(error){
-            return next(new ApiError(400,error.details[0].message));
+        const { value, error } = Joi.jobValidate.validate(req.body);
+        if (error) {
+            return next(new ApiError(400, error.details[0].message));
         }
-        
+
         // B3: tao job len trang
         const jobService = new JobService(MongoDB.client);
         const document = await jobService.create(req.body, id);
         // B4: thong bao cho nguoi dung
-        return res.send({ document });
-    }catch(error){
+        console.log(document)
+        return res.send({
+            result: true,
+            message: "Đăng thành công"
+        });
+    } catch (error) {
         console.log(error);
-        return next(new ApiError(500,"Có lỗi trong quá trình đăng bài"));
+        return next(new ApiError(500, "Có lỗi trong quá trình đăng bài"));
     }
 }
 
@@ -43,13 +47,13 @@ exports.update = async (req, res, next) => {
     try {
         const jobService = new JobService(MongoDB.client);
         const document = await jobService.update(req.params.id, req.body);
-        if(!document) {
+        if (!document) {
             return next(new ApiError(400, "Job not found"));
         }
-        return res.send({message: "Jobs update successfuly"});
+        return res.send({ message: "Jobs update successfuly" });
     } catch (error) {
         console.log(error);
-        return next(new ApiError(500,"Something wrong when updating job"));
+        return next(new ApiError(500, "Something wrong when updating job"));
     }
 }
 
@@ -57,7 +61,7 @@ exports.findOne = async (req, res, next) => {
     try {
         const jobService = new JobService(MongoDB.client);
         const document = await jobService.findById(req.params.id);
-        if(!document){
+        if (!document) {
             return next(new ApiError(404, "Job not found"));
         }
         return res.send(document);
@@ -73,9 +77,10 @@ exports.findByUserId = async (req, res, next) => {
     try {
         const jobService = new JobService(MongoDB.client);
         const document = await jobService.findByUserId(req.params.userId);
-        if(document.length==0){
+        if (document.length == 0) {
             return next(new ApiError(404, "Job from user not found"));
         }
+        console.log(document)
         return res.send(document);
     } catch (error) {
         console.log(error);
@@ -88,12 +93,13 @@ exports.findByUserId = async (req, res, next) => {
 exports.getTotalByUserId = async (req, res, next) => {
     try {
         const jobService = new JobService(MongoDB.client);
+        console.log(req.params.userId)
         const count = await jobService.countTotal(req.params.userId);
-        if(!count){
+        if (!count) {
             return next(new ApiError(404, "Job from user not found"));
         }
-        return res.send({total: count});
-    }catch (error) {
+        return res.send({ total: count });
+    } catch (error) {
         console.log(error);
         return next(
             new ApiError(500, `Error getting job total with id=${req.params.userId}`)
@@ -118,17 +124,13 @@ exports.findByKey = async (req, res, next) => {
     try {
         const key = req.params.key ? req.params.key.toLowerCase() : undefined;
         const province = req.params.province ? req.params.province.toLowerCase() : undefined;
-        console.log(key);
         const jobService = new JobService(MongoDB.client);
         const document = await jobService.find({});
         const string = jobService.jobToString(document);
-        console.log(string);
         const result = document.filter((job, index) => {
-            console.log("Key: ",string[index].includes(key))
-            console.log("Province: ",string[index].includes(province))
             return (string[index].includes(key) || string[index].includes(province))
         })
-        
+
         return res.send(result);
     } catch (error) {
         console.log(error);
@@ -138,11 +140,11 @@ exports.findByKey = async (req, res, next) => {
     }
 }
 
-exports.findAll = async (req,res,next) => {
+exports.findAll = async (req, res, next) => {
     try {
         const jobService = new JobService(MongoDB.client);
         const document = await jobService.find({});
-        if(document.length==0){
+        if (document.length == 0) {
             return next(new ApiError(404, "Job not found"));
         }
         return res.send(document);
@@ -159,17 +161,17 @@ exports.delete = async (req, res, next) => {
         // B1: Kiểm tra id trả về sau khi verify token 
         const userId = req.user._id;
         const accountService = new AccountService(MongoDB.client);
-        const account =  await accountService.findById(userId);
-        if(!account || account.role!=="company"){
+        const account = await accountService.findById(userId);
+        if (!account || account.role !== "company") {
             return next(new ApiError(403, "Tài khoản không hợp lệ"))
         };
         // B2: Xóa
         const jobService = new JobService(MongoDB.client);
         const result = jobService.delete(req.params.id, userId);
-        if(!result) {
+        if (!result) {
             return next(new ApiError(404, "Job not found"));
         }
-        return res.send({message: "Job was deleted successfully"});
+        return res.send({ message: "Job was deleted successfully" });
         // B3: Thông báo cho người dùng
     } catch (error) {
         console.log(error);
@@ -186,12 +188,12 @@ exports.getListJobFavorite = async (req, res, next) => {
         const userService = new UserService(MongoDB.client);
         const user = (await userService.findByAccountId(req.user._id));
         // B3: Kiểm tra và trả về cho người dùng
-        if(user.listUserFavoriteJob === undefined){
+        if (user.listUserFavoriteJob === undefined) {
             return res.send([]);
         }
         const jobService = new JobService(MongoDB.client);
         const result = [];
-        for(let index in user.listUserFavoriteJob){
+        for (let index in user.listUserFavoriteJob) {
             const job = await jobService.findById(user.listUserFavoriteJob[index]);
             result.push(job);
         }
@@ -229,7 +231,7 @@ exports.addJobFavorite = async (req, res, next) => {
     try {
         const userService = new UserService(MongoDB.client);
         const result = await userService.addJobFavorite(req.user._id, req.body.jobId);
-        if(!result){
+        if (!result) {
             return next(new ApiError(404, "Không tìm thấy người dùng"))
         }
         return res.send({
@@ -249,7 +251,7 @@ exports.deleteJobFavorite = async (req, res, next) => {
         const userService = new UserService(MongoDB.client);
         const result = await userService.deleteJobFavorite(req.user._id, req.params.jobId);
         console.log(result);
-        if(!result){
+        if (!result) {
             return next(new ApiError(404, "Không tìm thấy người dùng"))
         }
         return res.send({

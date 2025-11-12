@@ -21,11 +21,12 @@ router.route("/fetch")
 router.route("/fetch/total/:userId")
     .get(job.getTotalByUserId);
 
+router.route("/fetch/user/:userId")
+    .get(job.findByUserId);
+
 router.route("/fetch/:key?/:province?")
     .get(job.findByKey);
 
-// router.route("/fetch/:userId")
-//     .get(job.findByUserId);
 
 router.route("/filter")
     .get(job.getJobFilter);
